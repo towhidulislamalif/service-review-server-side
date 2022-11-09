@@ -46,6 +46,25 @@ app.get('/', (req, res) => {
 app.get('/services', async (req, res) => {
   try {
     const cursor = Services.find({});
+
+    const services = await cursor.limit(3).toArray();
+
+    res.send({
+      success: true,
+      message: 'Congratulations! You got the data.',
+      data: services,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/servicefeed', async (req, res) => {
+  try {
+    const cursor = Services.find({}).sort({ title: 1 });
     const services = await cursor.toArray();
 
     res.send({
@@ -61,6 +80,28 @@ app.get('/services', async (req, res) => {
   }
 });
 
+app.post('/services', async (req, res) => {
+  try {
+    const result = await Services.insertOne(req.body);
+
+    if (result.insertedId) {
+      res.send({
+        success: true,
+        message: `Successfully created the ${req.body.title} with id ${result.insertedId}`,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "Couldn't create the service",
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
