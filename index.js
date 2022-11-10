@@ -49,8 +49,8 @@ app.get('/', (req, res) => {
 app.get('/services', async (req, res) => {
   try {
     const cursor = Services.find({});
-    sort = { _id: -1 };
-    const services = await cursor.limit(3).sort(sort).toArray();
+
+    const services = await cursor.limit(3).toArray();
 
     res.send({
       success: true,
@@ -153,13 +153,13 @@ function verifyJwt(req, res, next) {
 app.get('/otherreviews', async (req, res) => {
   try {
     let query = {};
-    console.log(req.query.itemId);
+    // console.log(req.query.itemId);
     if (req.query.itemId) {
       query = {
         itemId: req.query.itemId,
       };
     }
-    console.log(query);
+    // console.log(query);
     const cursor = Reviews.find(query);
     const review = await cursor.toArray();
     res.send(review);
