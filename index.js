@@ -149,8 +149,35 @@ function verifyJwt(req, res, next) {
     next();
   });
 }
-// verifyJwt,
-app.get('/reviews', async (req, res) => {
+
+app.get('/otherreviews', async (req, res) => {
+  try {
+    let query = {};
+    console.log(req.query.itemId);
+    if (req.query.itemId) {
+      query = {
+        itemId: req.query.itemId,
+      };
+    }
+    console.log(query);
+    const cursor = Reviews.find(query);
+    const review = await cursor.toArray();
+    res.send(review);
+
+    // res.send({
+    //   success: true,
+    //   message: 'You get the data',
+    //   data: review,
+    // });
+  } catch (error) {
+    res.send({
+      success: true,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/reviews', verifyJwt, async (req, res) => {
   try {
     let query = {};
 
