@@ -49,8 +49,8 @@ app.get('/', (req, res) => {
 app.get('/services', async (req, res) => {
   try {
     const cursor = Services.find({});
-
-    const services = await cursor.limit(3).toArray();
+    sort = { _id: -1 };
+    const services = await cursor.limit(3).sort(sort).toArray();
 
     res.send({
       success: true,
