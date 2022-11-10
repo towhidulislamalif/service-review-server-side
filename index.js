@@ -2,9 +2,10 @@
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { query } = require('express');
+require('dotenv').config();
+// const { query } = require('express');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -98,6 +99,16 @@ app.get('/servicefeed', async (req, res) => {
   }
 });
 
+// * JWT
+app.post('/jwt', (req, res) => {
+  const user = req.body;
+  // console.log(user);
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: '60d',
+  });
+  res.send({ token });
+});
+
 app.post('/services', async (req, res) => {
   try {
     const result = await Services.insertOne(req.body);
@@ -121,15 +132,33 @@ app.post('/services', async (req, res) => {
   }
 });
 
+// ! verifyJwt
+function verifyJwt(req, res, next) {
+  const authHead = req.headers.authorization;
+
+  if (!authHead) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+  const token = authHead.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
+    if (error) {
+      return res.status(401).send({ message: 'unauthorized access' });
+    }
+    req.decoded = decoded;
+
+    next();
+  });
+}
+// verifyJwt,
 app.get('/reviews', async (req, res) => {
   try {
-    // console.log(req.query.name);
     let query = {};
 
     if (req.query.name) {
       query = {
         reviewer: req.query.name,
       };
+      console.log(query);
     }
     const cursor = Reviews.find(query);
     const reviews = await cursor.toArray();
@@ -170,7 +199,7 @@ app.post('/reviews', async (req, res) => {
 });
 
 // ! delete
-app.delete('/reviews', async (req, res) => {
+app.delete('/reviews/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await Reviews.deleteOne({ _id: ObjectId(id) });
@@ -186,7 +215,55 @@ app.delete('/reviews', async (req, res) => {
       });
     }
   } catch (error) {
-    res.send(error.message);
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reviews = await Reviews.findOne({ _id: ObjectId(id) });
+
+    res.send({
+      success: true,
+      data: reviews,
+    });
+  } catch (error) {
+    res.send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.patch('/reviews/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await Reviews.updateOne(
+      { _id: ObjectId(id) },
+      { $set: req.body }
+    );
+
+    if (result.modifiedCount) {
+      res.send({
+        success: true,
+        message: 'Successfully updated',
+      });
+    } else {
+      res.send({
+        success: false,
+        message: 'Could not updated',
+      });
+    }
+  } catch (error) {
+    res.send({
+      success: true,
+      error: error.message,
+    });
   }
 });
 
