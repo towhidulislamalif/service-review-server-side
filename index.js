@@ -46,12 +46,42 @@ app.get('/', (req, res) => {
   res.send('This API was created by Towhidul Islam');
 });
 
+// ! jwt
+
+// ! verifyJwt
+function verifyJwt(req, res, next) {
+  const authHead = req.headers.authorization;
+
+  if (!authHead) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+  const token = authHead.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
+    if (error) {
+      return res.status(401).send({ message: 'unauthorized access' });
+    }
+    req.decoded = decoded;
+
+    next();
+  });
+}
+
+// end point services
+
+// * JWT
+app.post('/jwt', (req, res) => {
+  const user = req.body;
+  // console.log(user);
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: '60d',
+  });
+  res.send({ token });
+});
+
 app.get('/services', async (req, res) => {
   try {
     const cursor = Services.find({});
-
     const services = await cursor.limit(3).toArray();
-
     res.send({
       success: true,
       message: 'Congratulations! You got the data.',
@@ -76,14 +106,16 @@ app.get('/services/:id', async (req, res) => {
       data: service,
     });
   } catch (error) {
-    success: false;
-    error: error.message;
+    res.send({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
 app.get('/servicefeed', async (req, res) => {
   try {
-    const cursor = Services.find({});
+    const cursor = Services.find({}).sort({ title: -1 });
     const services = await cursor.toArray();
 
     res.send({
@@ -97,16 +129,6 @@ app.get('/servicefeed', async (req, res) => {
       error: error.message,
     });
   }
-});
-
-// * JWT
-app.post('/jwt', (req, res) => {
-  const user = req.body;
-  // console.log(user);
-  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: '60d',
-  });
-  res.send({ token });
 });
 
 app.post('/services', async (req, res) => {
@@ -132,51 +154,6 @@ app.post('/services', async (req, res) => {
   }
 });
 
-// ! verifyJwt
-function verifyJwt(req, res, next) {
-  const authHead = req.headers.authorization;
-
-  if (!authHead) {
-    return res.status(401).send({ message: 'unauthorized access' });
-  }
-  const token = authHead.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
-    if (error) {
-      return res.status(401).send({ message: 'unauthorized access' });
-    }
-    req.decoded = decoded;
-
-    next();
-  });
-}
-
-app.get('/otherreviews', async (req, res) => {
-  try {
-    let query = {};
-    // console.log(req.query.itemId);
-    if (req.query.itemId) {
-      query = {
-        itemId: req.query.itemId,
-      };
-    }
-    // console.log(query);
-    const cursor = Reviews.find(query);
-    const review = await cursor.toArray();
-    res.send(review);
-
-    // res.send({
-    //   success: true,
-    //   message: 'You get the data',
-    //   data: review,
-    // });
-  } catch (error) {
-    res.send({
-      success: true,
-      error: error.message,
-    });
-  }
-});
-
 app.get('/reviews', verifyJwt, async (req, res) => {
   try {
     let query = {};
@@ -197,6 +174,35 @@ app.get('/reviews', verifyJwt, async (req, res) => {
   } catch (error) {
     res.send({
       success: false,
+      error: error.message,
+    });
+  }
+});
+
+app.get('/otherreviews', async (req, res) => {
+  console.log(req.query.title);
+  try {
+    let query = {};
+    // console.log(req.query.itemId);
+    if (req.query.title) {
+      query = {
+        service_name: req.query.title,
+      };
+    }
+    // console.log(query);
+    const cursor = Reviews.find(query);
+    const review = await cursor.toArray();
+    console.log(review);
+    // res.send(review);
+
+    res.send({
+      success: true,
+      message: 'Congratulations! You got the data.',
+      data: review,
+    });
+  } catch (error) {
+    res.send({
+      success: true,
       error: error.message,
     });
   }
