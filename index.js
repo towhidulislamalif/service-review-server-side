@@ -51,13 +51,14 @@ app.get('/', (req, res) => {
 // ! verifyJwt
 function verifyJwt(req, res, next) {
   const authHead = req.headers.authorization;
+  console.log(authHead);
 
   if (!authHead) {
     return res.status(401).send({ message: 'unauthorized access' });
   }
   const token = authHead.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (error, decoded) {
-    if (error) {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
       return res.status(401).send({ message: 'unauthorized access' });
     }
     req.decoded = decoded;
@@ -131,6 +132,7 @@ app.get('/servicefeed', async (req, res) => {
   }
 });
 
+// verifyJwt
 app.post('/services', async (req, res) => {
   try {
     const result = await Services.insertOne(req.body);
@@ -153,11 +155,10 @@ app.post('/services', async (req, res) => {
     });
   }
 });
-
-app.get('/reviews', verifyJwt, async (req, res) => {
+app.get('/reviews', async (req, res) => {
   try {
     let query = {};
-
+    // name
     if (req.query.name) {
       query = {
         reviewer: req.query.name,
