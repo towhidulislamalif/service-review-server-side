@@ -116,7 +116,7 @@ app.get('/services/:id', async (req, res) => {
 
 app.get('/servicefeed', async (req, res) => {
   try {
-    const cursor = Services.find({}).sort({ title: -1 });
+    const cursor = Services.find({});
     const services = await cursor.toArray();
 
     res.send({
