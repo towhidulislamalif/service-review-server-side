@@ -1,10 +1,8 @@
-// * require
-
 const express = require('express');
+require('dotenv').config();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config();
 // const { query } = require('express');
 
 const app = express();
@@ -33,11 +31,7 @@ async function run() {
   }
 }
 run();
-// client.connect((err) => {
-//   const collection = client.db('test').collection('devices');
-// perform actions on the collection object
-//   client.close();
-// });
+
 const Services = client.db('servicereview').collection('services');
 const Reviews = client.db('servicereview').collection('reviews');
 
@@ -284,6 +278,7 @@ app.patch('/reviews/:id', async (req, res) => {
 
     if (result.modifiedCount) {
       res.send({
+        data: result,
         success: true,
         message: 'Successfully updated',
       });
